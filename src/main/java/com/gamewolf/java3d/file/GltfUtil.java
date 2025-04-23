@@ -1,0 +1,175 @@
+package com.gamewolf.java3d.file;
+
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
+import com.gamewolf.java3d.model.JMesh;
+import com.gamewolf.java3d.model.JTriangle;
+import com.gamewolf.java3d.model.JVertexSimple;
+
+import glm.vec._2.Vec2;
+import glm.vec._3.Vec3;
+
+public class GltfUtil {
+	
+	public static List<JMesh> readMeshFromGltf(String path){
+		
+		File file=new File(path);
+		String baseFolder=file.getParentFile().getAbsolutePath();
+		//System.out.println(baseFolder);
+		List<JMesh> meshList=new ArrayList<>();
+		String content=FileUtil.readFile2String(path);
+		JSONObject gltfJson=JSONObject.parseObject(content);
+		
+		JSONArray accessors=gltfJson.getJSONArray("accessors");
+		JSONArray meshes=gltfJson.getJSONArray("meshes");
+		JSONArray buffers=gltfJson.getJSONArray("buffers");
+		JSONArray bufferViews=gltfJson.getJSONArray("bufferViews");
+		for(int i=0;i<meshes.size();i++) {
+			JSONObject meshi=meshes.getJSONObject(i);
+			JMesh jmeshi=parseMesh(meshi,accessors,bufferViews,buffers,baseFolder);
+			meshList.add(jmeshi);
+		}
+		
+		//System.out.println(gltfJson);
+		return meshList;
+	}
+
+	private static JMesh parseMesh(JSONObject meshi, JSONArray accessors, JSONArray bufferViews, JSONArray buffers,
+			String baseFolder) {
+
+		
+		JSONArray primitives=meshi.getJSONArray("primitives");
+		JSONObject primitive=primitives.getJSONObject(0);
+		JSONObject attributes=primitive.getJSONObject("attributes");
+		Integer indices=primitive.getIntValue("indices");
+		if(indices!=null) {
+			int positionIdx=attributes.getIntValue("POSITION");
+			int normalidx=attributes.getIntValue("NORMAL");
+			int uvIdx=attributes.getIntValue("TEXCOORD_0");
+			JSONObject indexAccessor=accessors.getJSONObject(indices);
+			JSONObject positionAccessor=accessors.getJSONObject(positionIdx);
+			JSONObject noramlAccessor=accessors.getJSONObject(normalidx);
+			JSONObject uvAccessor=accessors.getJSONObject(uvIdx);
+			int positionBufferView=positionAccessor.getIntValue("bufferView");
+			int normalBufferView=noramlAccessor.getIntValue("bufferView");
+			int indexBufferView=indexAccessor.getIntValue("bufferView");
+			int uvBufferView=uvAccessor.getIntValue("bufferView");
+			int vertexCnt=positionAccessor.getIntValue("count");
+			int triangelIndiceCnt=indexAccessor.getIntValue("count");
+			
+			JSONObject bvPositionObject=bufferViews.getJSONObject(positionBufferView);
+			JSONObject bvNormalObject=bufferViews.getJSONObject(normalBufferView);
+			JSONObject bvIndiceObject=bufferViews.getJSONObject(indexBufferView);
+			JSONObject bvUvObject=bufferViews.getJSONObject(uvBufferView);
+			
+
+			int bufferPointId=bvPositionObject.getIntValue("buffer");
+			int bufferNormalId=bvNormalObject.getIntValue("buffer");
+			int bufferVIdxId=bvIndiceObject.getIntValue("buffer");
+			
+			int positionOffset=bvPositionObject.getIntValue("byteOffset");
+			int normalOffset=bvNormalObject.getIntValue("byteOffset");
+			int uvOffset=bvUvObject.getIntValue("byteOffset");
+			int indiceOffset=bvIndiceObject.getIntValue("byteOffset");
+			
+			JSONObject bufferLoc=buffers.getJSONObject(bufferPointId);
+			String binPath=bufferLoc.getString("uri");
+			String bufferPath=baseFolder+File.separator+binPath;
+			return readMesh(bufferPath,positionOffset,normalOffset,uvOffset,vertexCnt,indiceOffset,triangelIndiceCnt);
+		}
+		
+		return null;
+	}
+	
+	private static float ReadFloat(RandomAccessFile rs) throws IOException {
+		 ByteBuffer buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
+         rs.read(buffer.array());
+         buffer.rewind();
+         return buffer.getFloat();
+	}
+	
+	private static short ReadShort(RandomAccessFile rs) throws IOException {
+		 ByteBuffer buffer = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN);
+         rs.read(buffer.array());
+         buffer.rewind();
+         return buffer.getShort();
+	}
+
+	private static JMesh readMesh(String bufferPath, int positionOffset, int normalOffset, int uvOffset, int vertexCnt,
+			int indiceOffset, int triangelIndiceCnt) {
+		// TODO Auto-generated method stub
+		JMesh mesh=new JMesh();
+		try (RandomAccessFile rs=new RandomAccessFile(bufferPath,"rw")){
+			rs.seek(positionOffset);
+			for(int i=0;i<vertexCnt;i++) {
+				float x=ReadFloat(rs);//rs.readFloat();
+				float y=ReadFloat(rs);//rs.readFloat();
+				float z=ReadFloat(rs);//rs.readFloat();
+				JVertexSimple vertex=new JVertexSimple(new Vec3(x, y, z));
+				mesh.addVetex(vertex);
+			}
+			
+			//dis.reset();
+			//dis.skip(normalOffset);
+			rs.seek(normalOffset);
+			for(int i=0;i<vertexCnt;i++) {
+				float nx=ReadFloat(rs);
+				float ny=ReadFloat(rs);
+				float nz=ReadFloat(rs);
+				mesh.addNormal(new Vec3(nx, ny, nz));
+			}
+			
+			//dis.reset();
+			//dis.skip(uvOffset);
+			rs.seek(uvOffset);
+			
+			for(int i=0;i<vertexCnt;i++){
+				
+				float u=ReadFloat(rs);
+				float v=ReadFloat(rs);
+				mesh.addUv(new Vec2(u,v));
+			}
+			
+			//dis.reset();
+			//dis.skip(indiceOffset);
+			rs.seek(indiceOffset);
+			
+			int triangleCnt=triangelIndiceCnt/3;
+			for(int i=0;i<triangleCnt;i++){
+				
+				short id1=ReadShort(rs);
+				short id2=ReadShort(rs);
+				short id3=ReadShort(rs);
+				JTriangle t=new JTriangle();
+				t.setVertex(id1, id2, id3);
+				t.setUv(id1, id2, id3);
+				t.setNormal(id1, id2, id3);
+				mesh.addTriangle(t);
+			}
+
+			return mesh;
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		return mesh;
+	}
+
+}
