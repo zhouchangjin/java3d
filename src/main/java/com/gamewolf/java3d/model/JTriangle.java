@@ -8,6 +8,7 @@ public class JTriangle {
 	int uvId[];
 	int normalId[];
 	Vec3 normal;
+	
 
 	public JTriangle(){
 		vtxId=new int[3];
@@ -44,4 +45,5 @@ public class JTriangle {
 	public int getNormal(int seq) {
 		return normalId[seq];
 	}
+
 }

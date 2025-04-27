@@ -44,11 +44,19 @@ public class WaveFrontUtil {
 				int vid0=t.getVertex(0)+1;
 				int vid1=t.getVertex(1)+1;
 				int vid2=t.getVertex(2)+1;
+				String uvPart0="";
+				String uvPart1="";
+				String uvPart2="";
+				if(uvmap.size()>0) {
+					int tvid0=t.getUv(0)+1;
+					int tvid1=t.getUv(1)+1;
+					int tvid2=t.getUv(2)+1;
+					uvPart0="/"+tvid0;
+					uvPart1="/"+tvid1;
+					uvPart2="/"+tvid2;
+				}
 				
-				int tvid0=t.getUv(0)+1;
-				int tvid1=t.getUv(1)+1;
-				int tvid2=t.getUv(2)+1;
-				String faceLine="f "+vid0+"/"+tvid0+" "+vid1+"/"+tvid1+" "+vid2+"/"+tvid2;
+				String faceLine="f "+vid0+uvPart0+" "+vid1+uvPart1+" "+vid2+uvPart2;
 				bufferedWriter.write(faceLine);
 				bufferedWriter.newLine();
 			}

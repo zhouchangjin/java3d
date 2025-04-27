@@ -1,12 +1,8 @@
 package com.gamewolf.java3d.file;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -24,6 +20,160 @@ import glm.vec._3.Vec3;
 
 public class GltfUtil {
 	
+	public static List<GlbChunkAccessor> parseChunkAccessor(JSONObject mesh,JSONArray accessors,
+			JSONArray bufferViews,JSONArray buffers) {
+		
+		JSONArray primitives=mesh.getJSONArray("primitives");
+		
+		List<GlbChunkAccessor> accessorList=new ArrayList<GlbChunkAccessor>();
+		
+		for(int pi=0;pi<primitives.size();pi++) {
+			
+			JSONObject primitive=primitives.getJSONObject(pi);
+			JSONObject attributes=primitive.getJSONObject("attributes");
+			Integer indices=primitive.getIntValue("indices");
+			if(indices!=null) {
+				int positionIdx=attributes.getIntValue("POSITION");
+				int normalidx=attributes.getIntValue("NORMAL");
+				int uvOffset=-1;
+				if(attributes.containsKey("TEXCOORD_0")) {
+					int uvIdx=attributes.getIntValue("TEXCOORD_0");
+					JSONObject uvAccessor=accessors.getJSONObject(uvIdx);
+					int uvBufferView=uvAccessor.getIntValue("bufferView");
+					JSONObject bvUvObject=bufferViews.getJSONObject(uvBufferView);
+					uvOffset=bvUvObject.getIntValue("byteOffset");
+				}
+								
+				JSONObject indexAccessor=accessors.getJSONObject(indices);
+				JSONObject positionAccessor=accessors.getJSONObject(positionIdx);
+				JSONObject noramlAccessor=accessors.getJSONObject(normalidx);
+				
+				int positionBufferView=positionAccessor.getIntValue("bufferView");
+				int normalBufferView=noramlAccessor.getIntValue("bufferView");
+				int indexBufferView=indexAccessor.getIntValue("bufferView");
+				
+				int vertexCnt=positionAccessor.getIntValue("count");
+				int triangelIndiceCnt=indexAccessor.getIntValue("count");
+				
+				JSONObject bvPositionObject=bufferViews.getJSONObject(positionBufferView);
+				JSONObject bvNormalObject=bufferViews.getJSONObject(normalBufferView);
+				JSONObject bvIndiceObject=bufferViews.getJSONObject(indexBufferView);
+
+				//int bufferPointId=bvPositionObject.getIntValue("buffer");
+				//int bufferNormalId=bvNormalObject.getIntValue("buffer");
+				//int bufferVIdxId=bvIndiceObject.getIntValue("buffer");
+				
+				int positionOffset=bvPositionObject.getIntValue("byteOffset");
+				int normalOffset=bvNormalObject.getIntValue("byteOffset");
+				
+				int indiceOffset=bvIndiceObject.getIntValue("byteOffset");
+				
+				GlbChunkAccessor.GlbChunkAccessorBuilder builder=new GlbChunkAccessor.GlbChunkAccessorBuilder();
+				builder.setPositionOffset(positionOffset)
+					.setNormalOffset(normalOffset)
+					.setUvOffset(uvOffset)
+					.setIndexOffset(indiceOffset)
+					.setVetexCnt(vertexCnt).setTriangleVCnt(triangelIndiceCnt);
+				GlbChunkAccessor accessor= builder.build();
+				accessorList.add(accessor);
+			}
+			
+			
+			
+			
+		}
+		return accessorList;
+	}
+	
+	public static List<GlbChunkAccessor> parseGlbChunkList(String json){
+		JSONObject gltfJson=JSONObject.parseObject(json);
+		//System.out.print(gltfJson);
+		JSONArray accessors=gltfJson.getJSONArray("accessors");
+		JSONArray meshes=gltfJson.getJSONArray("meshes");
+		JSONArray buffers=gltfJson.getJSONArray("buffers");
+		JSONArray bufferViews=gltfJson.getJSONArray("bufferViews");
+		
+		List<GlbChunkAccessor> accessorList=new ArrayList<>();
+		
+		for(int i=0;i<meshes.size();i++) {
+			JSONObject meshi=meshes.getJSONObject(i);
+			List<GlbChunkAccessor> accessor=parseChunkAccessor(meshi,accessors,bufferViews,buffers);
+			accessorList.addAll(accessor);
+		}
+		
+		return accessorList;
+	}
+	
+	public static List<JMesh> readMeshFromGlb(RandomAccessFileAdvance rafa,long offset){
+		
+		try {
+			rafa.offset(offset);
+			String magic=rafa.readString(4);
+			System.out.println(magic);
+			int version=rafa.readInt();
+			System.out.println("version="+version);
+			int length=rafa.readInt();
+			System.out.println("length="+length);
+			
+			int jsonLength=rafa.readInt();
+			System.out.println("jsonLenght="+jsonLength);
+			
+			Integer chunkType=rafa.readInt();
+			System.out.println("chunkType="+Integer.toHexString(chunkType));
+			
+			String json=rafa.readString(jsonLength);
+			System.out.println(json);
+			
+			int chunkLength2=rafa.readInt();
+			System.out.println("chunkLength2="+chunkLength2);
+			Integer chunkType2=rafa.readInt();
+			System.out.println("chunkType2="+Integer.toHexString(chunkType2));
+			
+			List<GlbChunkAccessor> chunklist=parseGlbChunkList(json);
+			long curPos=rafa.offset();
+			List<JMesh> meshLIst=new ArrayList<>();
+			for(GlbChunkAccessor glbChunkAccessor:chunklist) {
+				JMesh mesh=readMeshFromGlbByChunckDef(rafa,glbChunkAccessor,curPos,chunkLength2);
+				meshLIst.add(mesh);
+			}
+			//System.out.print(chunklist.get(0));
+			return meshLIst;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		
+		return null;
+	}
+	
+	
+	public static JMesh readMeshFromGlbByChunckDef(RandomAccessFileAdvance rafa, 
+			GlbChunkAccessor glbChunkAccessor,
+			long curPos,int chunkLength) throws IOException {
+			glbChunkAccessor.setBeginOffset(curPos);
+			glbChunkAccessor.setRafa(rafa);
+			glbChunkAccessor.setLength(chunkLength);
+			return glbChunkAccessor.readMesh();
+	}
+
+	public static List<JMesh> readMeshFromGlb(String path){
+		RandomAccessFileAdvance rafa=new RandomAccessFileAdvance(path);
+		try {
+			rafa.open();
+			return readMeshFromGlb(rafa,0);
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	public static List<JMesh> readMeshFromGltfJson(String json,RandomAccessFileAdvance rafa){
+		
+		return null;
+	}
+	
 	public static List<JMesh> readMeshFromGltf(String path){
 		
 		File file=new File(path);
@@ -32,7 +182,6 @@ public class GltfUtil {
 		List<JMesh> meshList=new ArrayList<>();
 		String content=FileUtil.readFile2String(path);
 		JSONObject gltfJson=JSONObject.parseObject(content);
-		
 		JSONArray accessors=gltfJson.getJSONArray("accessors");
 		JSONArray meshes=gltfJson.getJSONArray("meshes");
 		JSONArray buffers=gltfJson.getJSONArray("buffers");
