@@ -22,6 +22,14 @@ public class GlbChunkAccessor extends ChunkAccessor{
 	long indexOffset;
 	
 	int triangleVCnt;
+
+	int indexComponentType;
+	
+	int minVertexId;
+	
+	int maxVertexId;
+	
+	
 	
 	public GlbChunkAccessor(RandomAccessFileAdvance rafa,
 			long offset, int length) {
@@ -42,13 +50,27 @@ public class GlbChunkAccessor extends ChunkAccessor{
 		this.normalOffset=builder.normalOffset;
 		this.vertexCnt=builder.vetexCnt;
 		this.triangleVCnt=builder.triangleVCnt;
+		this.indexComponentType=builder.indexComponentType;
+		this.maxVertexId=builder.maxVertexId;
+		this.minVertexId=builder.minVertexId;
 	}
 	
 	
 	public JMesh readMesh() throws IOException {
 		if(this.rafa!=null) {
 			JMesh mesh=new JMesh();
-			rafa.offset(beginOffset+positionOffset);
+			long offsetPositionFinal=beginOffset+positionOffset;
+			long offsetNormalFinal=beginOffset+normalOffset;
+			long offsetUvFinal=beginOffset+uvOffset;
+			if(minVertexId!=-1 && maxVertexId!=-1) {
+				vertexCnt=maxVertexId-minVertexId+1;
+				long offsetAcc=minVertexId*12;
+				long offsetUvAcc=minVertexId*8;
+				offsetPositionFinal=offsetPositionFinal+offsetAcc;
+				offsetNormalFinal=offsetNormalFinal+offsetAcc;
+				offsetUvFinal=offsetUvFinal+offsetUvAcc;
+			}
+			rafa.offset(offsetPositionFinal);
 			
 			for(int i=0;i<vertexCnt;i++) {
 				float x=rafa.readFloat();
@@ -58,7 +80,7 @@ public class GlbChunkAccessor extends ChunkAccessor{
 				mesh.addVetex(vertex);
 			}
 			
-			rafa.offset(beginOffset+normalOffset);
+			rafa.offset(offsetNormalFinal);
 			for(int i=0;i<vertexCnt;i++) {
 				float nx=rafa.readFloat();
 				float ny=rafa.readFloat();
@@ -67,7 +89,7 @@ public class GlbChunkAccessor extends ChunkAccessor{
 			}
 			
 			if(uvOffset>0) {
-				rafa.offset(beginOffset+uvOffset);
+				rafa.offset(offsetUvFinal);
 				for(int i=0;i<vertexCnt;i++){
 					
 					float u=rafa.readFloat();
@@ -79,15 +101,29 @@ public class GlbChunkAccessor extends ChunkAccessor{
 			rafa.offset(beginOffset+indexOffset);
 			int tCnt=triangleVCnt/3;
 			for(int i=0;i<tCnt;i++){
+				int id1=-1,id2=-1,id3=-1;
+				if(indexComponentType==5123) {
+					id1=rafa.readShort();
+					id2=rafa.readShort();
+					id3=rafa.readShort();
+				}else {
+					id1=rafa.readInt();
+					id2=rafa.readInt();
+					id3=rafa.readInt();
+				}
 				
-				short id1=rafa.readShort();
-				short id2=rafa.readShort();
-				short id3=rafa.readShort();
+				if(minVertexId!=-1 && maxVertexId!=-1) {
+					id1=id1-minVertexId;
+					id2=id2-minVertexId;
+					id3=id3-minVertexId;
+				}
+				
 				JTriangle t=new JTriangle();
 				t.setVertex(id1, id2, id3);
 				t.setUv(id1, id2, id3);
 				t.setNormal(id1, id2, id3);
 				mesh.addTriangle(t);
+				
 			}
 			return mesh;
 		}
@@ -97,6 +133,30 @@ public class GlbChunkAccessor extends ChunkAccessor{
 	
 	
 	
+	public int getMinVertexId() {
+		return minVertexId;
+	}
+
+	public void setMinVertexId(int minVertexId) {
+		this.minVertexId = minVertexId;
+	}
+
+	public int getMaxVertexId() {
+		return maxVertexId;
+	}
+
+	public void setMaxVertexId(int maxVertexId) {
+		this.maxVertexId = maxVertexId;
+	}
+
+	public int getIndexComponentType() {
+		return indexComponentType;
+	}
+
+	public void setIndexComponentType(int indexComponentType) {
+		this.indexComponentType = indexComponentType;
+	}
+
 	public long getPositionOffset() {
 		return positionOffset;
 	}
@@ -166,9 +226,13 @@ public class GlbChunkAccessor extends ChunkAccessor{
 		
 		long indexOffset;
 		
+		int indexComponentType=5123;
+		
 		int triangleVCnt;
 		
+		int minVertexId=-1;
 		
+		int maxVertexId=-1;
 		
 		public GlbChunkAccessorBuilder() {
 			
@@ -222,6 +286,17 @@ public class GlbChunkAccessor extends ChunkAccessor{
 		
 		public GlbChunkAccessorBuilder setTriangleVCnt(int triangleVCnt) {
 			this.triangleVCnt=triangleVCnt;
+			return this;
+		}
+		
+		public GlbChunkAccessorBuilder setIndexComponentType(int indexCpType) {
+			this.indexComponentType=indexCpType;
+			return this;
+		}
+		
+		public GlbChunkAccessorBuilder setMinMaxVertexRange(int min,int max) {
+			this.minVertexId=min;
+			this.maxVertexId=max;
 			return this;
 		}
 		

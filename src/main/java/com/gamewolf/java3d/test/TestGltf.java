@@ -16,13 +16,17 @@ public class TestGltf {
 //		for(int i=0;i<mesh.size();i++) {
 //			WaveFrontUtil.SaveMeshToWaveFont(mesh.get(i), "meshi", "d:/"+i+".obj");
 //		}
-		String path="d:/gltf/building.b3dm";
+		String path="d:/gltf/dragon_low.b3dm";
 		List<JMesh> b3dm=B3DMUtil.readMeshFromB3DM(path);
-		WaveFrontUtil.SaveMeshToWaveFont(b3dm.get(0), "dragon", "d:/building.obj");
-		//String path="d:/untitled.glb";
+		//WaveFrontUtil.SaveMeshToWaveFont(b3dm.get(0), "dragon", "d:/building.obj");
+		//String path="d:/test.glb";
 		//List<JMesh> meshgbl=GltfUtil.readMeshFromGlb(path);
-		//JMesh m=meshgbl.get(0);
-		//WaveFrontUtil.SaveMeshToWaveFont(m, "cube", "d:/cube3.obj");
+		int i=0;
+		for(JMesh msh:b3dm) {
+			i++;
+			WaveFrontUtil.SaveMeshToWaveFont(msh, "cube", "d:/dragon_low"+i+".obj");
+		}
+		
 	}
 
 }

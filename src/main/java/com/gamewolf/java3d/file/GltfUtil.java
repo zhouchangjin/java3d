@@ -50,7 +50,28 @@ public class GltfUtil {
 				
 				int positionBufferView=positionAccessor.getIntValue("bufferView");
 				int normalBufferView=noramlAccessor.getIntValue("bufferView");
+				
 				int indexBufferView=indexAccessor.getIntValue("bufferView");
+				int componentType=indexAccessor.getIntValue("componentType");
+				int indexBufferLocalOffset=0;
+				if(indexAccessor.containsKey("byteOffset")) {
+					indexBufferLocalOffset=indexAccessor.getIntValue("byteOffset");
+				}
+				int normalLocalOffset=0;
+				if(noramlAccessor.containsKey("byteOffset")) {
+					normalLocalOffset=noramlAccessor.getIntValue("byteOffset");
+				}
+				int positionLocalOffset=0;
+				if(positionAccessor.containsKey("byteOffset")) {
+					positionLocalOffset=positionAccessor.getIntValue("byteOffset");
+				}
+				
+				int min=-1;int max=-1;
+				if(indexAccessor.containsKey("min") && indexAccessor.containsKey("max")) {
+				    min=indexAccessor.getJSONArray("min").getIntValue(0);
+					max=indexAccessor.getJSONArray("max").getIntValue(0);
+					
+				}
 				
 				int vertexCnt=positionAccessor.getIntValue("count");
 				int triangelIndiceCnt=indexAccessor.getIntValue("count");
@@ -63,17 +84,20 @@ public class GltfUtil {
 				//int bufferNormalId=bvNormalObject.getIntValue("buffer");
 				//int bufferVIdxId=bvIndiceObject.getIntValue("buffer");
 				
-				int positionOffset=bvPositionObject.getIntValue("byteOffset");
-				int normalOffset=bvNormalObject.getIntValue("byteOffset");
+				int positionOffset=bvPositionObject.getIntValue("byteOffset")+positionLocalOffset;
+				int normalOffset=bvNormalObject.getIntValue("byteOffset")+normalLocalOffset;
+				int indiceOffset=bvIndiceObject.getIntValue("byteOffset")+indexBufferLocalOffset;
 				
-				int indiceOffset=bvIndiceObject.getIntValue("byteOffset");
 				
 				GlbChunkAccessor.GlbChunkAccessorBuilder builder=new GlbChunkAccessor.GlbChunkAccessorBuilder();
 				builder.setPositionOffset(positionOffset)
 					.setNormalOffset(normalOffset)
 					.setUvOffset(uvOffset)
 					.setIndexOffset(indiceOffset)
-					.setVetexCnt(vertexCnt).setTriangleVCnt(triangelIndiceCnt);
+					.setVetexCnt(vertexCnt)
+					.setTriangleVCnt(triangelIndiceCnt)
+					.setIndexComponentType(componentType)
+					.setMinMaxVertexRange(min, max);
 				GlbChunkAccessor accessor= builder.build();
 				accessorList.add(accessor);
 			}

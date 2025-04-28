@@ -2,6 +2,7 @@ package com.gamewolf.java3d.file;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.List;
 
 import com.gamewolf.java3d.model.JMesh;
@@ -47,9 +48,12 @@ public class B3DMUtil {
 			long offset=rafa.offset();
 //			
 			
-			//byte[] bytes=new byte[chunl]
-			//RandomAccessFile raf=new RandomAccessFile("d:/test.glb", "rw");
-			//raf.write(null)
+//			byte[] bytes=new byte[3665320];
+//			RandomAccessFile raf2=new RandomAccessFile("d:/test.glb", "rw");
+//			rafa.readAll(bytes);
+//			raf2.write(bytes);
+//			raf2.close();
+			//graf.write(null)
 //			
 			
 			List<JMesh> meshlist=GltfUtil.readMeshFromGlb(rafa, offset);
