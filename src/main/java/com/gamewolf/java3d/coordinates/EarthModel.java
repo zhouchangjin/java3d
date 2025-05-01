@@ -56,7 +56,7 @@ public class EarthModel {
 	
 	public static class EarthModelFactory{
 		
-		EarthModel createEarthMode(String crsStr) {
+		public EarthModel createEarthMode(String crsStr) {
 			EarthModel em=new EarthModel();
 			double a=6378137;
 			double f=1/298.257223565;

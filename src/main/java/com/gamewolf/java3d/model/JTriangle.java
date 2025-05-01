@@ -9,6 +9,21 @@ public class JTriangle {
 	int normalId[];
 	Vec3 normal;
 	
+	public int[] getVtxId() {
+		return vtxId;
+	}
+	
+	public int[] getUvId() {
+		return uvId;
+	}
+	
+	public int[] getNormalId() {
+		return normalId;
+	}
+	
+	public Vec3 getNormal() {
+		return normal;
+	}
 
 	public JTriangle(){
 		vtxId=new int[3];

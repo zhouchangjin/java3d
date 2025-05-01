@@ -30,7 +30,7 @@ public class RandomAccessFileAdvance {
 	}
 	
 	public void open() throws FileNotFoundException {		
-		raf=new RandomAccessFile(path, "rw");
+		raf=new RandomAccessFile(path, "r");
 	}
 
 	public String readString(int i) throws IOException {

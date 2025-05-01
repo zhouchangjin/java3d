@@ -42,6 +42,10 @@ public class JMesh {
 	public List<JVertexSimple> getVertices() {
 		return vertices;
 	}
+	
+	public JVertexSimple getVertex(int id) {
+		return vertices.get(id);
+	}
 
 	public void setVertices(List<JVertexSimple> vertices) {
 		this.vertices = vertices;

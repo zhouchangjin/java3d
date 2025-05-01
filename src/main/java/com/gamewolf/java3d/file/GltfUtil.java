@@ -133,25 +133,25 @@ public class GltfUtil {
 		try {
 			rafa.offset(offset);
 			String magic=rafa.readString(4);
-			System.out.println(magic);
+			//System.out.println(magic);
 			int version=rafa.readInt();
-			System.out.println("version="+version);
+			//System.out.println("version="+version);
 			int length=rafa.readInt();
-			System.out.println("length="+length);
+			//System.out.println("length="+length);
 			
 			int jsonLength=rafa.readInt();
-			System.out.println("jsonLenght="+jsonLength);
+			//System.out.println("jsonLenght="+jsonLength);
 			
 			Integer chunkType=rafa.readInt();
-			System.out.println("chunkType="+Integer.toHexString(chunkType));
+			//System.out.println("chunkType="+Integer.toHexString(chunkType));
 			
 			String json=rafa.readString(jsonLength);
 			System.out.println(json);
 			
 			int chunkLength2=rafa.readInt();
-			System.out.println("chunkLength2="+chunkLength2);
+			//System.out.println("chunkLength2="+chunkLength2);
 			Integer chunkType2=rafa.readInt();
-			System.out.println("chunkType2="+Integer.toHexString(chunkType2));
+			//System.out.println("chunkType2="+Integer.toHexString(chunkType2));
 			
 			List<GlbChunkAccessor> chunklist=parseGlbChunkList(json);
 			long curPos=rafa.offset();
