@@ -6,8 +6,10 @@ import com.gamewolf.java3d.model.JMesh;
 import com.gamewolf.java3d.model.JTriangle;
 import com.gamewolf.java3d.model.JVertexSimple;
 
+import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
+import glm.vec._4.Vec4;
 
 public class GlbChunkAccessor extends ChunkAccessor{
 
@@ -29,7 +31,9 @@ public class GlbChunkAccessor extends ChunkAccessor{
 	
 	int maxVertexId;
 	
+	int meshId;
 	
+	Mat4 transform;
 	
 	public GlbChunkAccessor(RandomAccessFileAdvance rafa,
 			long offset, int length) {
@@ -53,12 +57,15 @@ public class GlbChunkAccessor extends ChunkAccessor{
 		this.indexComponentType=builder.indexComponentType;
 		this.maxVertexId=builder.maxVertexId;
 		this.minVertexId=builder.minVertexId;
+		this.meshId=builder.meshId;
+		this.transform=builder.transform;
 	}
 	
 	
 	public JMesh readMesh() throws IOException {
 		if(this.rafa!=null) {
 			JMesh mesh=new JMesh();
+			mesh.setId(meshId);
 			long offsetPositionFinal=beginOffset+positionOffset;
 			long offsetNormalFinal=beginOffset+normalOffset;
 			long offsetUvFinal=beginOffset+uvOffset;
@@ -75,8 +82,12 @@ public class GlbChunkAccessor extends ChunkAccessor{
 			for(int i=0;i<vertexCnt;i++) {
 				float x=rafa.readFloat();
 				float y=rafa.readFloat(); 
-				float z=rafa.readFloat(); 
-				JVertexSimple vertex=new JVertexSimple(new Vec3(x, y, z));
+				float z=rafa.readFloat();
+				
+				Vec4 vec4=new Vec4(x,y,z,1);
+				Vec4 out=transform.mul(vec4);
+				Vec3 position=out.toVec3_();
+				JVertexSimple vertex=new JVertexSimple(position);
 				mesh.addVetex(vertex);
 			}
 			
@@ -205,6 +216,32 @@ public class GlbChunkAccessor extends ChunkAccessor{
 		this.triangleVCnt = triangleVCnt;
 	}
 
+    
+
+
+	public int getMeshId() {
+		return meshId;
+	}
+
+	public void setMeshId(int meshId) {
+		this.meshId = meshId;
+	}
+	
+	
+
+
+
+
+	public Mat4 getTransform() {
+		return transform;
+	}
+
+	public void setTransform(Mat4 transform) {
+		this.transform = transform;
+	}
+
+
+
 
 
 
@@ -233,6 +270,10 @@ public class GlbChunkAccessor extends ChunkAccessor{
 		int minVertexId=-1;
 		
 		int maxVertexId=-1;
+		
+		int meshId=-1;
+		
+		Mat4 transform=new Mat4(1.0f);
 		
 		public GlbChunkAccessorBuilder() {
 			
@@ -297,6 +338,16 @@ public class GlbChunkAccessor extends ChunkAccessor{
 		public GlbChunkAccessorBuilder setMinMaxVertexRange(int min,int max) {
 			this.minVertexId=min;
 			this.maxVertexId=max;
+			return this;
+		}
+		
+		public GlbChunkAccessorBuilder setMeshId(int id) {
+			this.meshId=id;
+			return this;
+		}
+		
+		public GlbChunkAccessorBuilder setTransform(Mat4 trans) {
+			this.transform=trans;
 			return this;
 		}
 		

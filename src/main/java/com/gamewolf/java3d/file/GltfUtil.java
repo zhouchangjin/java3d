@@ -7,7 +7,9 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -15,16 +17,17 @@ import com.gamewolf.java3d.model.JMesh;
 import com.gamewolf.java3d.model.JTriangle;
 import com.gamewolf.java3d.model.JVertexSimple;
 
+import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 
 public class GltfUtil {
 	
-	public static List<GlbChunkAccessor> parseChunkAccessor(JSONObject mesh,JSONArray accessors,
+	public static List<GlbChunkAccessor> parseChunkAccessor(JSONObject mesh,
+			int id,Mat4 mat4,JSONArray accessors,
 			JSONArray bufferViews,JSONArray buffers) {
 		
 		JSONArray primitives=mesh.getJSONArray("primitives");
-		
 		List<GlbChunkAccessor> accessorList=new ArrayList<GlbChunkAccessor>();
 		
 		for(int pi=0;pi<primitives.size();pi++) {
@@ -97,7 +100,8 @@ public class GltfUtil {
 					.setVetexCnt(vertexCnt)
 					.setTriangleVCnt(triangelIndiceCnt)
 					.setIndexComponentType(componentType)
-					.setMinMaxVertexRange(min, max);
+					.setMinMaxVertexRange(min, max)
+					.setMeshId(id).setTransform(mat4);
 				GlbChunkAccessor accessor= builder.build();
 				accessorList.add(accessor);
 			}
@@ -116,12 +120,33 @@ public class GltfUtil {
 		JSONArray meshes=gltfJson.getJSONArray("meshes");
 		JSONArray buffers=gltfJson.getJSONArray("buffers");
 		JSONArray bufferViews=gltfJson.getJSONArray("bufferViews");
-		
+		JSONArray nodes=gltfJson.getJSONArray("nodes");
+		Map<Integer,Mat4> transformMap=new HashMap<Integer, Mat4>();
+		for(int i=0;i<nodes.size();i++) {
+			JSONObject node=nodes.getJSONObject(i);
+			if(node.containsKey("mesh")) {
+				int meshId=node.getInteger("mesh");
+				if(node.containsKey("matrix")) {
+					JSONArray matrixJson=node.getJSONArray("matrix");
+					float matrix[]=new float[16];
+					for(int fi=0;fi<16;fi++) {
+						matrix[fi]=matrixJson.getFloatValue(fi);
+					}
+					Mat4 mat4=new Mat4(matrix);
+					transformMap.put(meshId, mat4);
+				}
+			}
+		}
 		List<GlbChunkAccessor> accessorList=new ArrayList<>();
 		
 		for(int i=0;i<meshes.size();i++) {
 			JSONObject meshi=meshes.getJSONObject(i);
-			List<GlbChunkAccessor> accessor=parseChunkAccessor(meshi,accessors,bufferViews,buffers);
+			Mat4 mat4=new Mat4(1.0f);
+			if(transformMap.containsKey(i)) {
+			    mat4=transformMap.get(i);
+			    //System.out.println(mat4);
+			}
+			List<GlbChunkAccessor> accessor=parseChunkAccessor(meshi,i,mat4,accessors,bufferViews,buffers);
 			accessorList.addAll(accessor);
 		}
 		

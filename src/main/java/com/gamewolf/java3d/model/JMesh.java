@@ -1,8 +1,11 @@
 package com.gamewolf.java3d.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import glm.mat._4.Mat4;
 import glm.vec._2.Vec2;
 import glm.vec._3.Vec3;
 
@@ -16,7 +19,9 @@ public class JMesh {
 	 
 	 List<Vec3> vertexNormals;
 	 
-	 public JMesh(){
+	 int id;
+	 
+	public JMesh(){
 		 vertices=new ArrayList<JVertexSimple>();
 		 triangles=new ArrayList<JTriangle>();
 		 uvMaps=new ArrayList<Vec2>();
@@ -75,6 +80,13 @@ public class JMesh {
 		this.vertexNormals = vertexNormals;
 	}
 	 
+	 public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
 	 
 
 }

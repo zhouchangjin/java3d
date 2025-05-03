@@ -39,7 +39,7 @@ public class D3TileUtil {
 			for(int ti=0;ti<tList.size();ti++) {
 				JVertexSimple[] vlist=getVertexList(mesh, ti);
 				List<double[]> points=transform(vlist, transformMat, EarthModel.WGS_84);
-				JSONArray arrayJsonObject=JSONArray.from(points);
+				//JSONArray arrayJsonObject=JSONArray.from(points);
 				
 				JSONObject feature=generatePolygonFeatureFromPoints(points);
 				if(feature!=null) {
