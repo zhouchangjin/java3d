@@ -14,7 +14,7 @@ public class JVertexSimple {
 		return position;
 	}
 	
-	float distance(JVertexSimple another) {
+	public float distance(JVertexSimple another) {
 		float dx=position.x-another.getPosition().x;
 		float dy=position.y-another.getPosition().y;
 		float dz=position.z-another.getPosition().z;

@@ -167,11 +167,16 @@ public class B3DMUtil {
 	
 	
 	public static void main(String args[]) {
-		String path="d:/gltf/ll.b3dm";
-		String outpath="d:/ll.glb";
+		String path="d:/b3dm/Tile_+246_+126_L19_000013.b3dm";
+		String outpath="d:/Tile_+246_+126_L19_000013.b3dm.glb";
 		B3DM b3dm=B3DMUtil.readB3DMModelFromB3DMFile(path);
-		Mat4 mat=b3dm.getTransformation();
-		System.out.println(mat);
-		//B3DMUtil.exportGlbFromB3DM(path,outpath);
+		List<JMesh> list=b3dm.getMeshList();
+		for(int i=0;i<list.size();i++) {
+			JMesh mehsi=list.get(i);
+			WaveFrontUtil.SaveMeshToWaveFont(mehsi, "out"+i, "d:/temp/oout/Tile_+246_+126_L19_000013_"+i+".obj");
+		}
+		//Mat4 mat=b3dm.getTransformation();
+		//System.out.println(mat);
+		B3DMUtil.exportGlbFromB3DM(path,outpath);
 	}
 }

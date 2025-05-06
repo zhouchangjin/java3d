@@ -60,5 +60,4 @@ public class JTriangle {
 	public int getNormal(int seq) {
 		return normalId[seq];
 	}
-
 }

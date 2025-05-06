@@ -14,6 +14,7 @@ import com.gamewolf.java3d.model.B3DM;
 import com.gamewolf.java3d.model.JMesh;
 import com.gamewolf.java3d.model.JTriangle;
 import com.gamewolf.java3d.model.JVertexSimple;
+import com.gamewolf.java3d.model.MeshGraph;
 
 import glm.mat._4.Mat4;
 import glm.vec._3.Vec3;
@@ -21,6 +22,7 @@ import glm.vec._4.Vec4;
 
 public class D3TileUtil {
 	
+
 	public static JSONObject convertB3DM2GeoJSON(String path,Mat4 mat4) {
 		if(mat4==null) {
 			mat4=new Mat4(1.0f);
@@ -151,8 +153,8 @@ public class D3TileUtil {
 		JSONObject featureCollection2=convertB3DM2GeoJSON(path2, mat2);
 		
 		try {
-			BufferedWriter bw=new BufferedWriter(new FileWriter("d:/ll.geojson"));
-			bw.append(featureCollection.toString());
+			BufferedWriter bw=new BufferedWriter(new FileWriter("d:/building3.geojson"));
+			bw.append(featureCollection2.toString());
 			bw.flush();
 			bw.close();
 		} catch (IOException e) {
